@@ -34,7 +34,7 @@ class SpotifyProxy(dbus.service.Object):
 
     def _init_player_state(self):
         #syncronize the playing status
-        self.Play()
+        self.spotify_iface.Play()
         #Grab spotify metadata
         metadata = self.spotify_props.Get(self.MEDIAPLAYER2_PLAYER,'Metadata')
         
@@ -88,43 +88,65 @@ class SpotifyProxy(dbus.service.Object):
     
     @dbus.service.method(MEDIAPLAYER2_PLAYER)
     def Next(self):
-        self.spotify_iface.Next()
+        p = self.state[self.MEDIAPLAYER2_PLAYER]
+        if p['CanControl'] and p['CanGoNext']:
+            self.spotify_iface.Next()
 
     @dbus.service.method(MEDIAPLAYER2_PLAYER)
     def Previous(self):
-        self.spotify_iface.Previous()
+        p = self.state[self.MEDIAPLAYER2_PLAYER]
+        if p['CanControl'] and p['CanGoPrevious']:
+            self.spotify_iface.Previous()
 
     @dbus.service.method(MEDIAPLAYER2_PLAYER)
     def Pause(self):
-        self.spotify_iface.Pause()
+        p = self.state[self.MEDIAPLAYER2_PLAYER]
+        if p['CanControl'] and p['CanPause']:
+            self.spotify_iface.Pause()
+            self.PropertiesChanged(self.MEDIAPLAYER2_PLAYER, {'PlaybackStatus' : 'Paused'}, [])
 
     @dbus.service.method(MEDIAPLAYER2_PLAYER)
     def PlayPause(self):
-        self.spotify_iface.PlayPause()
-        pbsts = self.state[self.MEDIAPLAYER2_PLAYER]['PlaybackStatus']
+        p = self.state[self.MEDIAPLAYER2_PLAYER]
+        if p['CanControl'] and (p['CanPlay'] or p['CanPause']):
+            self.spotify_iface.PlayPause()
+
+        pbsts = p['PlaybackStatus']
 
         if pbsts == 'Playing':
             pbsts = 'Paused'
         else: 
             pbsts = 'Playing'
 
-        self.state[self.MEDIAPLAYER2_PLAYER]['PlaybackStatus'] = pbsts
+        p['PlaybackStatus'] = pbsts
         self.PropertiesChanged(self.MEDIAPLAYER2_PLAYER, {'PlaybackStatus' : pbsts}, [])
 
     @dbus.service.method(MEDIAPLAYER2_PLAYER)
     def Stop(self):
-        self.spotify_iface.Stop()
+        p = self.state[self.MEDIAPLAYER2_PLAYER]
+        if p['CanControl'] and p['CanStop']:
+            self.spotify_iface.Stop()
+            self.PropertiesChanged(self.MEDIAPLAYER2_PLAYER, {'PlaybackStatus' : 'Stopped'}, [])
 
     @dbus.service.method(MEDIAPLAYER2_PLAYER)
     def Play(self):
-        self.spotify_iface.Play()
+        p = self.state[self.MEDIAPLAYER2_PLAYER]
+        if p['CanControl'] and p['CanPlay']:
+            self.spotify_iface.Play()
+            self.PropertiesChanged(self.MEDIAPLAYER2_PLAYER, {'PlaybackStatus' : 'Playing'}, [])
 
     @dbus.service.method(MEDIAPLAYER2_PLAYER, in_signature='x' )
     def Seek(self, Offset):
-        self.spotify_iface.Seek(Offset)
+        p = self.state[self.MEDIAPLAYER2_PLAYER]
+        if p['CanControl'] and p['CanSeek']:
+            self.spotify_iface.Seek(Offset)
 
     @dbus.service.method(MEDIAPLAYER2_PLAYER, in_signature='ox')
     def SetPosition(self, trackid, position):
+        p = self.state[self.MEDIAPLAYER2_PLAYER]
+        if p['CanControl'] and p['CanSeek']:
+            self.spotify_iface.Seek(Offset)
+
         self.spotify_iface.SetPosition(trackid, position)
 
     @dbus.service.method(MEDIAPLAYER2_PLAYER, in_signature='s')
