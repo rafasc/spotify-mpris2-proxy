@@ -1,5 +1,8 @@
 # spotify-mpris2-proxy
 
+## spotify fixed the issue, nothing to see here anymore :)
+
+
 Currently Spotify doesn't implement the MPRIS D-Bus Interface according
 with the spec (link below). As a consequence the KDE mediacontroller
 plasmoid fails to recognize Spotify as mpris2 compliant player.
